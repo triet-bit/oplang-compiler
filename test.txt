@@ -1,0 +1,10 @@
+class Main{
+
+    static void main(){
+        int i;
+        for i := 0 to 5 do {
+            io.writeInt(i);
+        }
+
+    }
+}   

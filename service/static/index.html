@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPLang Online IDE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>OPLang Compiler</h1>
+            <button id="run-btn" onclick="submitCode()">▶ RUN CODE</button>
+        </header>
+
+        <div class="main-content">
+            <div class="editor-section">
+                <textarea id="code-editor">class Example {
+    void main() {
+        io.writeStrLn("Hello OPLang from Web!");
+        int i;
+        for i := 1 to 5 do {
+            io.writeIntLn(i * 10);
+        }
+    }
+}</textarea>
+            </div>
+
+            <div class="output-section">
+                <div class="output-header">TERMINAL OUTPUT</div>
+                <pre id="output-console">Ready to compile...</pre>
+                <div id="loader" class="hidden">Compiling... <span class="spinner"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
