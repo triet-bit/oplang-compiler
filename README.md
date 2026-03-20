@@ -78,7 +78,7 @@ OPLang is a statically-typed, class-based OOP language that compiles to JVM byte
 
 ```oplang
 class Fibonacci {
-    void main() {
+    static void main() {
         int a; int b; int c; int i;
         a := 0; b := 1;
         io.writeStrLn("Fibonacci:");
