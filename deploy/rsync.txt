@@ -1,0 +1,8 @@
+cd ~/Documents/oplang-compiler
+rsync -av --exclude='__pycache__' \
+          --exclude='*.pyc' \
+          --exclude='.git' \
+          --exclude='temp_jobs' \
+          --exclude='temp' \
+          -e "ssh -i ~/.ssh/oplang-vm_key.pem" \
+          . azureuser@20.2.91.144:~/oplang-compiler

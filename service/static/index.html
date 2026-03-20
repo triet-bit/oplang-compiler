@@ -3,41 +3,1237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPLang Online IDE</title>
+    <title>OPLang IDE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
-    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --crust:    #11111b;
+            --mantle:   #181825;
+            --base:     #1e1e2e;
+            --surface0: #313244;
+            --surface1: #45475a;
+            --surface2: #585b70;
+            --overlay0: #6c7086;
+            --overlay1: #7f849c;
+            --overlay2: #9399b2;
+            --subtext0: #a6adc8;
+            --subtext1: #bac2de;
+            --text:     #cdd6f4;
+            --lavender: #b4befe;
+            --blue:     #89b4fa;
+            --sapphire: #74c7ec;
+            --sky:      #89dceb;
+            --teal:     #94e2d5;
+            --green:    #a6e3a1;
+            --yellow:   #f9e2af;
+            --peach:    #fab387;
+            --maroon:   #eba0ac;
+            --red:      #f38ba8;
+            --mauve:    #cba6f7;
+            --pink:     #f5c2e7;
+            --flamingo: #f2cdcd;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-ui:   'Nunito', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--base);
+            color: var(--text);
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── TITLEBAR ── */
+        .titlebar {
+            height: 46px;
+            background: var(--crust);
+            border-bottom: 1px solid var(--surface0);
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .logo { display: flex; align-items: center; gap: 8px; }
+
+        .logo-mark {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: linear-gradient(135deg, var(--mauve), var(--blue));
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+            color: var(--base);
+            box-shadow: 0 2px 10px rgba(203,166,247,0.3);
+        }
+
+        .logo-text { font-size: 14px; font-weight: 800; }
+        .logo-text span { color: var(--mauve); }
+
+        .sep { width: 1px; height: 16px; background: var(--surface0); }
+
+        /* File tabs */
+        .tabs { display: flex; gap: 2px; align-items: center; flex: 1; overflow-x: auto; }
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .file-tab {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 11px; border-radius: 6px;
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--overlay1); cursor: pointer;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            transition: all 0.12s;
+            flex-shrink: 0;
+        }
+
+        .file-tab:hover { background: var(--surface0); color: var(--subtext1); }
+
+        .file-tab.active {
+            background: var(--surface0);
+            color: var(--text);
+            border-color: var(--surface1);
+        }
+
+        .file-tab .tab-close {
+            width: 14px; height: 14px;
+            border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; color: var(--overlay0);
+            opacity: 0;
+            transition: all 0.1s;
+        }
+
+        .file-tab:hover .tab-close,
+        .file-tab.active .tab-close { opacity: 1; }
+        .file-tab .tab-close:hover { background: var(--surface1); color: var(--red); }
+
+        .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mauve); flex-shrink: 0; }
+
+        /* Right controls */
+        .titlebar-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+
+        .pill {
+            padding: 3px 9px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+            background: var(--surface0); color: var(--overlay2);
+            border: 1px solid var(--surface1);
+        }
+        .pill.live { background: rgba(166,227,161,0.12); color: var(--green); border-color: rgba(166,227,161,0.25); }
+
+        .run-btn {
+            height: 32px; padding: 0 16px; border-radius: 7px; border: none;
+            background: var(--mauve); color: var(--base);
+            font-family: var(--font-ui); font-size: 13px; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: all 0.18s; box-shadow: 0 2px 14px rgba(203,166,247,0.3);
+        }
+        .run-btn:hover { background: var(--lavender); box-shadow: 0 4px 20px rgba(203,166,247,0.45); transform: translateY(-1px); }
+        .run-btn:disabled { background: var(--surface1); color: var(--overlay0); box-shadow: none; transform: none; cursor: not-allowed; }
+        .run-btn.interactive { background: var(--teal); box-shadow: 0 2px 14px rgba(148,226,213,0.3); }
+        .run-btn.interactive:hover { background: var(--sky); box-shadow: 0 4px 20px rgba(148,226,213,0.45); }
+
+        /* stdin input row */
+        .stdin-row {
+            display: none;
+            padding: 8px 12px;
+            border-top: 1px solid var(--surface0);
+            background: var(--mantle);
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .stdin-row.show { display: flex; }
+        .stdin-prompt { font-family: var(--font-mono); font-size: 12px; color: var(--yellow); flex-shrink: 0; }
+        .stdin-input {
+            flex: 1; background: var(--surface0);
+            border: 1px solid var(--yellow); border-radius: 5px;
+            color: var(--text); font-family: var(--font-mono); font-size: 12px;
+            padding: 4px 9px; outline: none; caret-color: var(--yellow);
+        }
+        .stdin-input::placeholder { color: var(--overlay0); }
+
+        /* ── PROGRESS ── */
+        .progress { height: 2px; background: var(--crust); flex-shrink: 0; overflow: hidden; }
+        .progress-fill { height: 100%; width: 100%; background: linear-gradient(90deg, var(--mauve), var(--blue), var(--sapphire)); display: none; }
+        .progress-fill.running { display: block; animation: prog 1.4s ease-in-out infinite; }
+        @keyframes prog { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* ── WORKSPACE ── */
+        .workspace { flex: 1; display: flex; overflow: hidden; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 220px;
+            background: var(--mantle);
+            border-right: 1px solid var(--surface0);
+            display: flex; flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            padding: 10px 12px 5px;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.12em; color: var(--overlay0);
+            text-transform: uppercase;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .section-btn {
+            width: 20px; height: 20px; border-radius: 4px; border: none;
+            background: transparent; color: var(--overlay1);
+            cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.12s;
+        }
+        .section-btn:hover { background: var(--surface0); color: var(--text); }
+
+        .file-list { flex: 1; overflow-y: auto; }
+
+        .file-item {
+            padding: 5px 12px 5px 10px;
+            display: flex; align-items: center; gap: 6px;
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--subtext0); cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: all 0.12s;
+            position: relative;
+        }
+        .file-item:hover { background: var(--surface0); color: var(--text); }
+        .file-item.active { background: rgba(203,166,247,0.08); color: var(--mauve); border-left-color: var(--mauve); }
+
+        .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .file-item-del {
+            width: 16px; height: 16px; border-radius: 3px;
+            background: transparent; border: none;
+            color: var(--overlay0); cursor: pointer; font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: all 0.1s;
+        }
+        .file-item:hover .file-item-del { opacity: 1; }
+        .file-item-del:hover { background: rgba(243,139,168,0.15); color: var(--red); }
+
+        /* new file input */
+        .new-file-row {
+            display: none;
+            padding: 5px 10px;
+            gap: 5px; align-items: center;
+        }
+        .new-file-row.show { display: flex; }
+        .new-file-input {
+            flex: 1; background: var(--surface0); border: 1px solid var(--mauve);
+            border-radius: 4px; color: var(--text);
+            font-family: var(--font-mono); font-size: 12px;
+            padding: 3px 7px; outline: none;
+        }
+        .new-file-ok {
+            background: var(--mauve); color: var(--base);
+            border: none; border-radius: 4px;
+            font-size: 11px; font-weight: 700;
+            padding: 3px 8px; cursor: pointer;
+        }
+
+        .sidebar-divider { height: 1px; background: var(--surface0); margin: 6px 8px; }
+
+        /* OPLang info section */
+        .lang-section { padding: 6px 12px; }
+
+        .lang-btn {
+            width: 100%; padding: 8px 10px;
+            background: var(--base); border: 1px solid var(--surface0);
+            border-radius: 8px; color: var(--subtext0);
+            font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
+            transition: all 0.15s; text-align: left;
+        }
+        .lang-btn:hover { background: rgba(203,166,247,0.08); border-color: var(--mauve); color: var(--mauve); }
+        .lang-btn-icon { font-size: 16px; }
+
+        /* ── EDITOR ── */
+        .editor-pane {
+            flex: 1; display: flex; flex-direction: column; min-width: 0;
+            border-right: 1px solid var(--surface0);
+        }
+
+        .editor-empty {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; gap: 10px;
+            color: var(--overlay0);
+        }
+        .editor-empty .big { font-size: 32px; }
+        .editor-empty .msg { font-size: 13px; font-family: var(--font-mono); }
+
+        .editor-wrap { flex: 1; overflow: hidden; display: none; }
+        .editor-wrap.show { display: block; }
+
+        /* CodeMirror Catppuccin */
+        .CodeMirror {
+            height: 100% !important;
+            font-family: var(--font-mono) !important;
+            font-size: 13.5px !important;
+            line-height: 1.75 !important;
+            background: var(--base) !important;
+            color: var(--text) !important;
+        }
+        .CodeMirror-gutters { background: var(--base) !important; border-right: 1px solid var(--surface0) !important; }
+        .CodeMirror-linenumber { color: var(--surface2) !important; }
+        .CodeMirror-cursor { border-left-color: var(--mauve) !important; }
+        .CodeMirror-selected { background: rgba(203,166,247,0.15) !important; }
+        .CodeMirror-activeline-background { background: rgba(49,50,68,0.4) !important; }
+        .cm-keyword   { color: var(--mauve) !important; }
+        .cm-def       { color: var(--blue) !important; }
+        .cm-variable  { color: var(--text) !important; }
+        .cm-variable-2{ color: var(--text) !important; }
+        .cm-string    { color: var(--green) !important; }
+        .cm-number    { color: var(--peach) !important; }
+        .cm-comment   { color: var(--overlay1) !important; font-style: italic; }
+        .cm-operator  { color: var(--sky) !important; }
+        .cm-type      { color: var(--yellow) !important; }
+        .cm-builtin   { color: var(--sapphire) !important; }
+        .cm-bracket   { color: var(--overlay2) !important; }
+
+        /* ── OUTPUT ── */
+        .output-pane {
+            width: 340px; display: flex; flex-direction: column; flex-shrink: 0;
+        }
+
+        .pane-header {
+            height: 35px; background: var(--mantle);
+            border-bottom: 1px solid var(--surface0);
+            display: flex; align-items: center;
+            padding: 0 12px; gap: 8px; flex-shrink: 0;
+        }
+        .pane-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--overlay0); text-transform: uppercase; }
+        .pane-spacer { flex: 1; }
+        .pane-meta { font-size: 11px; font-family: var(--font-mono); color: var(--overlay1); }
+
+        .icon-btn {
+            width: 24px; height: 24px; border-radius: 5px;
+            border: 1px solid var(--surface0); background: transparent;
+            color: var(--overlay1); cursor: pointer; font-size: 12px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.12s;
+        }
+        .icon-btn:hover { background: var(--surface0); color: var(--text); }
+
+        .output-body {
+            flex: 1; overflow-y: auto;
+            padding: 14px;
+            font-family: var(--font-mono); font-size: 12.5px; line-height: 1.8;
+            background: var(--base);
+        }
+
+        .out-comment { color: var(--overlay0); }
+        .out-success { color: var(--green); }
+        .out-result  { color: var(--text); white-space: pre-wrap; }
+        .out-error   { color: var(--red); white-space: pre-wrap; }
+
+        .ok-box {
+            background: rgba(166,227,161,0.07);
+            border: 1px solid rgba(166,227,161,0.18);
+            border-left: 3px solid var(--green);
+            border-radius: 0 7px 7px 0;
+            padding: 8px 12px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .ok-label { font-size: 11px; font-weight: 700; color: var(--green); }
+        .ok-time  { font-size: 11px; color: var(--overlay1); }
+
+        .err-box {
+            background: rgba(243,139,168,0.07);
+            border: 1px solid rgba(243,139,168,0.18);
+            border-left: 3px solid var(--red);
+            border-radius: 0 7px 7px 0;
+            padding: 8px 12px; margin-bottom: 10px;
+        }
+        .err-type { font-size: 10.5px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+        .err-msg  { color: var(--subtext0); font-size: 12px; }
+
+        /* ── STATUS BAR ── */
+        .statusbar {
+            height: 22px; background: var(--mauve);
+            display: flex; align-items: center;
+            padding: 0 12px; gap: 14px; flex-shrink: 0;
+        }
+        .s-item { font-size: 11px; font-family: var(--font-mono); color: rgba(30,30,46,0.75); }
+        .s-item.bold { color: var(--base); font-weight: 700; }
+        .s-spacer { flex: 1; }
+
+        /* ── SPEC MODAL ── */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(17,17,27,0.85);
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            display: none; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            width: 820px; max-width: 95vw;
+            height: 80vh;
+            background: var(--mantle);
+            border: 1px solid var(--surface1);
+            border-radius: 14px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            height: 50px; background: var(--crust);
+            border-bottom: 1px solid var(--surface0);
+            display: flex; align-items: center;
+            padding: 0 20px; gap: 12px; flex-shrink: 0;
+        }
+
+        .modal-title { font-size: 15px; font-weight: 800; }
+        .modal-title span { color: var(--mauve); }
+        .modal-spacer { flex: 1; }
+
+        .modal-close {
+            width: 28px; height: 28px; border-radius: 6px; border: none;
+            background: var(--surface0); color: var(--subtext0);
+            cursor: pointer; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.12s;
+        }
+        .modal-close:hover { background: rgba(243,139,168,0.2); color: var(--red); }
+
+        .modal-nav {
+            display: flex; gap: 2px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--surface0);
+            flex-shrink: 0; flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 4px 10px; border-radius: 5px; border: none;
+            background: transparent; color: var(--overlay1);
+            font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.12s; white-space: nowrap;
+        }
+        .nav-btn:hover { background: var(--surface0); color: var(--text); }
+        .nav-btn.active { background: rgba(203,166,247,0.15); color: var(--mauve); }
+
+        .modal-body {
+            flex: 1; overflow-y: auto;
+            padding: 20px 24px;
+        }
+
+        /* Spec content styles */
+        .spec-section { display: none; }
+        .spec-section.show { display: block; }
+
+        .spec-h1 { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+        .spec-h2 { font-size: 15px; font-weight: 700; color: var(--mauve); margin: 18px 0 8px; }
+        .spec-h3 { font-size: 13px; font-weight: 700; color: var(--blue); margin: 14px 0 6px; }
+        .spec-p { font-size: 13px; color: var(--subtext0); line-height: 1.7; margin-bottom: 10px; }
+        .spec-version { font-size: 12px; color: var(--overlay1); font-family: var(--font-mono); margin-bottom: 16px; }
+
+        .spec-code {
+            background: var(--base); border: 1px solid var(--surface0);
+            border-radius: 8px; padding: 12px 14px;
+            font-family: var(--font-mono); font-size: 12px; color: var(--text);
+            line-height: 1.7; overflow-x: auto; margin: 8px 0 12px;
+            white-space: pre;
+        }
+
+        .spec-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 12.5px; }
+        .spec-table th {
+            background: var(--surface0); color: var(--subtext1);
+            padding: 7px 12px; text-align: left; font-weight: 700;
+            font-size: 11px; letter-spacing: 0.05em;
+        }
+        .spec-table td { padding: 7px 12px; color: var(--subtext0); border-bottom: 1px solid var(--surface0); }
+        .spec-table tr:last-child td { border-bottom: none; }
+        .spec-table code { font-family: var(--font-mono); color: var(--mauve); font-size: 12px; }
+        .spec-table td:first-child code { color: var(--sky); }
+
+        .kw-grid { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+        .kw { background: var(--surface0); color: var(--mauve); font-family: var(--font-mono); font-size: 12px; padding: 3px 9px; border-radius: 5px; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 3px; }
+
+        .spin {
+            display: inline-block; width: 10px; height: 10px;
+            border: 2px solid var(--surface1); border-top-color: var(--mauve);
+            border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .toast {
+            position: fixed; bottom: 34px; right: 18px;
+            background: var(--surface0); border: 1px solid var(--surface1);
+            color: var(--green); font-family: var(--font-mono); font-size: 12px;
+            padding: 7px 14px; border-radius: 7px;
+            opacity: 0; transform: translateY(6px);
+            transition: all 0.2s; pointer-events: none; z-index: 999;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>OPLang Compiler</h1>
-            <button id="run-btn" onclick="submitCode()">▶ RUN CODE</button>
-        </header>
 
-        <div class="main-content">
-            <div class="editor-section">
-                <textarea id="code-editor">class Example {
+<!-- TITLEBAR -->
+<div class="titlebar">
+    <div class="logo">
+        <div class="logo-mark">OP</div>
+        <div class="logo-text"><span>OP</span>Lang IDE</div>
+    </div>
+    <div class="sep"></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="titlebar-right">
+        <div class="pill live">● online</div>
+        <div class="pill" id="status-pill">ready</div>
+        <button class="run-btn" id="run-btn" onclick="runActive()">▶ Run</button>
+        <button class="run-btn interactive" id="run-interactive-btn" onclick="runInteractive()" title="Run with stdin support">⚡ Interactive</button>
+    </div>
+</div>
+
+<div class="progress"><div class="progress-fill" id="progress"></div></div>
+
+<div class="workspace">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-section">
+            Files
+            <button class="section-btn" title="New file" onclick="showNewFile()">+</button>
+        </div>
+
+        <div class="new-file-row" id="new-file-row">
+            <input class="new-file-input" id="new-file-input"
+                placeholder="name.opl"
+                onkeydown="newFileKey(event)"
+                autocomplete="off"/>
+            <button class="new-file-ok" onclick="createFile()">OK</button>
+        </div>
+
+        <div class="file-list" id="file-list"></div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="lang-section">
+            <button class="lang-btn" onclick="openSpec()">
+                <span class="lang-btn-icon">📖</span>
+                OPLang Specification
+            </button>
+        </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="editor-pane" id="editor-pane">
+        <div class="editor-empty" id="editor-empty">
+            <div class="big">🐱</div>
+            <div class="msg">Create or select a file to start editing</div>
+        </div>
+        <div class="editor-wrap" id="editor-wrap"></div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output-pane">
+        <div class="pane-header">
+            <div class="pane-label">Output</div>
+            <div class="pane-spacer"></div>
+            <div class="pane-meta" id="out-time"></div>
+            <button class="icon-btn" onclick="copyOutput()" title="Copy output" style="margin-left:6px">⧉</button>
+            <button class="icon-btn" onclick="clearOutput()" title="Clear" style="margin-left:4px">✕</button>
+        </div>
+        <div class="output-body" id="output-body">
+            <span class="out-comment">// Run a file to see output here</span>
+        </div>
+        <div class="stdin-row" id="stdin-row">
+            <span class="stdin-prompt">stdin ❯</span>
+            <input class="stdin-input" id="stdin-input"
+                placeholder="Type input and press Enter..."
+                onkeydown="sendStdin(event)"
+                autocomplete="off" spellcheck="false"/>
+        </div>
+    </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+    <div class="s-item bold" id="s-status">● Ready</div>
+    <div class="s-item" id="s-file">No file open</div>
+    <div class="s-spacer"></div>
+    <div class="s-item">OPLang 1.0</div>
+    <div class="s-item">Catppuccin Mocha 🐱</div>
+</div>
+
+<!-- SPEC MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeSpecOutside(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <div class="modal-title"><span>OP</span>Lang Specification <span style="color:var(--overlay1);font-size:12px;font-weight:400;margin-left:6px">v1.0 · August 2025</span></div>
+            <div class="modal-spacer"></div>
+            <button class="modal-close" onclick="closeSpec()">✕</button>
+        </div>
+        <div class="modal-nav">
+            <button class="nav-btn active" onclick="showTab('intro')">Introduction</button>
+            <button class="nav-btn" onclick="showTab('structure')">Program Structure</button>
+            <button class="nav-btn" onclick="showTab('lexical')">Lexical</button>
+            <button class="nav-btn" onclick="showTab('types')">Type System</button>
+            <button class="nav-btn" onclick="showTab('statements')">Statements</button>
+            <button class="nav-btn" onclick="showTab('io')">I/O</button>
+            <button class="nav-btn" onclick="showTab('examples')">Examples</button>
+        </div>
+        <div class="modal-body">
+
+            <!-- INTRO -->
+            <div class="spec-section show" id="tab-intro">
+                <div class="spec-h1">OPLang Programming Language</div>
+                <div class="spec-version">Version 1.0 · August 2025 · Ho Chi Minh City University of Technology</div>
+                <div class="spec-p">OPLang (O-P-Lang) is a mini object-oriented programming language designed for students practicing implementing a compiler for a simple OOP language.</div>
+                <div class="spec-p">Despite its simplicity, OPLang includes most important features of an OOP language: <strong style="color:var(--text)">encapsulation</strong>, <strong style="color:var(--text)">information hiding</strong>, <strong style="color:var(--text)">class hierarchy</strong>, <strong style="color:var(--text)">inheritance</strong>, and <strong style="color:var(--text)">polymorphism</strong>.</div>
+                <div class="spec-h2">Compiler Pipeline</div>
+                <div class="spec-p">This IDE compiles OPLang source code through the following pipeline:</div>
+                <div class="spec-code">Source Code
+    → ANTLR4 Lexer / Parser
+    → Abstract Syntax Tree (AST)
+    → Static Semantic Checker
+    → JVM Bytecode (via Jasmin assembler)
+    → Execution on JVM</div>
+                <div class="spec-h2">Quick Start</div>
+                <div class="spec-code">class Hello {
     void main() {
-        io.writeStrLn("Hello OPLang from Web!");
+        io.writeStrLn("Hello, OPLang!");
+    }
+}</div>
+            </div>
+
+            <!-- STRUCTURE -->
+            <div class="spec-section" id="tab-structure">
+                <div class="spec-h1">Program Structure</div>
+                <div class="spec-p">An OPLang program is written in a single file and consists of multiple class declarations. The entry point is a <code style="color:var(--mauve);font-family:var(--font-mono)">void main()</code> static method.</div>
+
+                <div class="spec-h2">Class Declaration</div>
+                <div class="spec-code">class ClassName extends SuperClass {
+    // attributes and methods
+}</div>
+                <div class="spec-p">Members can be <code style="color:var(--mauve);font-family:var(--font-mono)">static</code> or instance. Attributes can be <code style="color:var(--mauve);font-family:var(--font-mono)">final</code> (immutable) or mutable.</div>
+
+                <div class="spec-h2">Attribute Declaration</div>
+                <div class="spec-code">static final int MAX := 100;
+float length, width;
+int x := 0, y := 5;</div>
+
+                <div class="spec-h2">Method Declaration</div>
+                <div class="spec-code">ReturnType methodName(Type param1; Type param2) {
+    // body
+}
+
+// Reference return
+Type & methodName(params) { ... }</div>
+
+                <div class="spec-h2">Constructor &amp; Destructor</div>
+                <div class="spec-code">// Default constructor
+ClassName() { ... }
+
+// Copy constructor
+ClassName(ClassName other) { ... }
+
+// User-defined constructor
+ClassName(Type param1; Type param2) { ... }
+
+// Destructor
+~ClassName() { ... }</div>
+            </div>
+
+            <!-- LEXICAL -->
+            <div class="spec-section" id="tab-lexical">
+                <div class="spec-h1">Lexical Structure</div>
+
+                <div class="spec-h2">Comments</div>
+                <div class="spec-code">/* This is a block comment
+   spanning multiple lines */
+
+# This is a line comment</div>
+
+                <div class="spec-h2">Keywords</div>
+                <div class="kw-grid">
+                    <span class="kw">boolean</span><span class="kw">break</span><span class="kw">class</span>
+                    <span class="kw">continue</span><span class="kw">do</span><span class="kw">else</span>
+                    <span class="kw">extends</span><span class="kw">float</span><span class="kw">for</span>
+                    <span class="kw">if</span><span class="kw">int</span><span class="kw">new</span>
+                    <span class="kw">nil</span><span class="kw">return</span><span class="kw">static</span>
+                    <span class="kw">string</span><span class="kw">then</span><span class="kw">this</span>
+                    <span class="kw">to</span><span class="kw">downto</span><span class="kw">true</span>
+                    <span class="kw">false</span><span class="kw">void</span><span class="kw">final</span>
+                </div>
+
+                <div class="spec-h2">Operators</div>
+                <table class="spec-table">
+                    <tr><th>Operator</th><th>Meaning</th><th>Operator</th><th>Meaning</th></tr>
+                    <tr><td><code>+</code></td><td>Addition / unary plus</td><td><code>-</code></td><td>Subtraction / minus</td></tr>
+                    <tr><td><code>*</code></td><td>Multiplication</td><td><code>/</code></td><td>Float division</td></tr>
+                    <tr><td><code>\</code></td><td>Integer division</td><td><code>%</code></td><td>Modulus</td></tr>
+                    <tr><td><code>==</code></td><td>Equal</td><td><code>!=</code></td><td>Not equal</td></tr>
+                    <tr><td><code>&lt;</code></td><td>Less than</td><td><code>&gt;</code></td><td>Greater than</td></tr>
+                    <tr><td><code>&amp;&amp;</code></td><td>Logical AND</td><td><code>||</code></td><td>Logical OR</td></tr>
+                    <tr><td><code>!</code></td><td>Logical NOT</td><td><code>^</code></td><td>String concatenation</td></tr>
+                    <tr><td><code>new</code></td><td>Object creation</td><td><code>&amp;</code></td><td>Reference</td></tr>
+                </table>
+
+                <div class="spec-h2">Identifiers</div>
+                <div class="spec-p">Begin with a letter (A-Z, a-z) or underscore, may contain letters, underscores, and digits. OPLang is <strong style="color:var(--text)">case-sensitive</strong>.</div>
+            </div>
+
+            <!-- TYPES -->
+            <div class="spec-section" id="tab-types">
+                <div class="spec-h1">Type System</div>
+                <div class="spec-h2">Primitive Types</div>
+                <table class="spec-table">
+                    <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+                    <tr><td><code>int</code></td><td>Integer number</td><td><code>42</code>, <code>-10</code></td></tr>
+                    <tr><td><code>float</code></td><td>Floating-point number</td><td><code>3.14</code>, <code>1.5e2</code></td></tr>
+                    <tr><td><code>boolean</code></td><td>Boolean value</td><td><code>true</code>, <code>false</code></td></tr>
+                    <tr><td><code>string</code></td><td>String literal</td><td><code>"Hello"</code></td></tr>
+                </table>
+
+                <div class="spec-h2">Array Types</div>
+                <div class="spec-code">int[5] arr := {1, 2, 3, 4, 5};
+float[3] coords;
+arr[0] := 10;  # indexing</div>
+
+                <div class="spec-h2">Reference Types</div>
+                <div class="spec-code">int & ref := someVar;       # reference variable
+Type & methodName(...) { } # reference return type
+void method(int & param)   # reference parameter</div>
+
+                <div class="spec-h2">Type Coercion</div>
+                <div class="spec-p"><code style="color:var(--mauve);font-family:var(--font-mono)">int</code> is automatically coerced to <code style="color:var(--mauve);font-family:var(--font-mono)">float</code> when needed. No implicit coercion in the other direction.</div>
+
+                <div class="spec-h2">Scope Rules</div>
+                <div class="spec-p"><strong style="color:var(--text)">Class scope</strong> — instance attributes visible in all methods and subclasses.</div>
+                <div class="spec-p"><strong style="color:var(--text)">Method scope</strong> — parameters/variables declared in method body.</div>
+                <div class="spec-p"><strong style="color:var(--text)">Block scope</strong> — variables declared in a block, visible to end of that block.</div>
+            </div>
+
+            <!-- STATEMENTS -->
+            <div class="spec-section" id="tab-statements">
+                <div class="spec-h1">Statements</div>
+
+                <div class="spec-h2">Assignment</div>
+                <div class="spec-code">x := 5;
+this.length := 10.0;</div>
+
+                <div class="spec-h2">If Statement</div>
+                <div class="spec-code">if condition then statement;
+if condition then statement; else statement;
+if condition then { block } else { block }</div>
+
+                <div class="spec-h2">For Loop</div>
+                <div class="spec-code">for i := 1 to 10 do {
+    io.writeIntLn(i);
+}
+
+for i := 10 downto 1 do {
+    io.writeIntLn(i);
+}</div>
+
+                <div class="spec-h2">While / Do-While</div>
+                <div class="spec-code">while condition do {
+    // body
+}
+
+do {
+    // body
+} while condition;</div>
+
+                <div class="spec-h2">Return, Break, Continue</div>
+                <div class="spec-code">return value;   # return with value
+return;          # void return
+break;           # exit loop
+continue;        # next iteration</div>
+
+                <div class="spec-h2">Object Creation</div>
+                <div class="spec-code">ClassName obj := new ClassName();
+ClassName obj := new ClassName(arg1, arg2);</div>
+            </div>
+
+            <!-- IO -->
+            <div class="spec-section" id="tab-io">
+                <div class="spec-h1">Input / Output</div>
+                <div class="spec-p">OPLang provides a built-in <code style="color:var(--mauve);font-family:var(--font-mono)">io</code> class with static methods for I/O operations.</div>
+                <table class="spec-table">
+                    <tr><th>Method</th><th>Description</th></tr>
+                    <tr><td><code>io.readInt()</code></td><td>Read integer from keyboard</td></tr>
+                    <tr><td><code>io.writeInt(n)</code></td><td>Write integer to screen</td></tr>
+                    <tr><td><code>io.writeIntLn(n)</code></td><td>Write integer + newline</td></tr>
+                    <tr><td><code>io.readFloat()</code></td><td>Read float from keyboard</td></tr>
+                    <tr><td><code>io.writeFloat(f)</code></td><td>Write float to screen</td></tr>
+                    <tr><td><code>io.writeFloatLn(f)</code></td><td>Write float + newline</td></tr>
+                    <tr><td><code>io.readBool()</code></td><td>Read boolean from keyboard</td></tr>
+                    <tr><td><code>io.writeBool(b)</code></td><td>Write boolean to screen</td></tr>
+                    <tr><td><code>io.writeBoolLn(b)</code></td><td>Write boolean + newline</td></tr>
+                    <tr><td><code>io.readStr()</code></td><td>Read string from keyboard</td></tr>
+                    <tr><td><code>io.writeStr(s)</code></td><td>Write string to screen</td></tr>
+                    <tr><td><code>io.writeStrLn(s)</code></td><td>Write string + newline</td></tr>
+                </table>
+            </div>
+
+            <!-- EXAMPLES -->
+            <div class="spec-section" id="tab-examples">
+                <div class="spec-h1">Example Programs</div>
+
+                <div class="spec-h2">Example 1 — Factorial</div>
+                <div class="spec-code">class Example1 {
+    int factorial(int n) {
+        if n == 0 then return 1;
+        else return n * this.factorial(n - 1);
+    }
+    void main() {
+        int x;
+        x := io.readInt();
+        io.writeIntLn(this.factorial(x));
+    }
+}</div>
+
+                <div class="spec-h2">Example 2 — Inheritance &amp; Polymorphism</div>
+                <div class="spec-code">class Shape {
+    float length, width;
+    float getArea() {}
+    Shape(float length, width) {
+        this.length := length;
+        this.width := width;
+    }
+}
+class Rectangle extends Shape {
+    float getArea() { return this.length * this.width; }
+}
+class Triangle extends Shape {
+    float getArea() { return this.length * this.width / 2; }
+}
+class Example2 {
+    void main() {
+        Shape s;
+        s := new Rectangle(3, 4);
+        io.writeFloatLn(s.getArea());  # 12.0
+        s := new Triangle(3, 4);
+        io.writeFloatLn(s.getArea());  # 6.0
+    }
+}</div>
+
+                <div class="spec-h2">Example 3 — Constructor &amp; Destructor</div>
+                <div class="spec-code">class Rectangle {
+    float length, width;
+    static int count;
+
+    Rectangle() { this.length := 1.0; this.width := 1.0; Rectangle.count := Rectangle.count + 1; }
+    Rectangle(float length; float width) {
+        this.length := length; this.width := width;
+        Rectangle.count := Rectangle.count + 1;
+    }
+    ~Rectangle() {
+        Rectangle.count := Rectangle.count - 1;
+        io.writeStrLn("Rectangle destroyed");
+    }
+    float getArea() { return this.length * this.width; }
+    static int getCount() { return Rectangle.count; }
+}
+class Example3 {
+    void main() {
+        Rectangle r1 := new Rectangle();
+        Rectangle r2 := new Rectangle(5.0, 3.0);
+        io.writeFloatLn(r1.getArea());         # 1.0
+        io.writeFloatLn(r2.getArea());         # 15.0
+        io.writeIntLn(Rectangle.getCount());   # 2
+    }
+}</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Copied ✓</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script>
+// ── File system ──
+let files = {};       // { name: content }
+let activeFile = null;
+let editors = {};     // { name: CodeMirror instance }
+let lastOutput = '';
+
+const DEFAULT_CODE = `class Example {
+    static void main() {
+        io.writeStrLn("Hello OPLang from Cloud!");
         int i;
         for i := 1 to 5 do {
             io.writeIntLn(i * 10);
         }
     }
-}</textarea>
-            </div>
+}`;
 
-            <div class="output-section">
-                <div class="output-header">TERMINAL OUTPUT</div>
-                <pre id="output-console">Ready to compile...</pre>
-                <div id="loader" class="hidden">Compiling... <span class="spinner"></span></div>
-            </div>
-        </div>
-    </div>
+// init with one default file
+createFileWithContent('main.opl', DEFAULT_CODE);
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
-    <script src="/static/script.js"></script>
+function createFileWithContent(name, content) {
+    files[name] = content;
+    renderFileList();
+    openFile(name);
+}
+
+function renderFileList() {
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+    Object.keys(files).forEach(name => {
+        const item = document.createElement('div');
+        item.className = 'file-item' + (name === activeFile ? ' active' : '');
+        item.innerHTML = `
+            <span style="color:var(--overlay1);font-size:11px">📄</span>
+            <span class="file-item-name">${esc(name)}</span>
+            <button class="file-item-del" onclick="deleteFile(event,'${esc(name)}')" title="Delete">✕</button>
+        `;
+        item.onclick = (e) => { if (!e.target.classList.contains('file-item-del')) openFile(name); };
+        list.appendChild(item);
+    });
+}
+
+function openFile(name) {
+    // save current editor content
+    if (activeFile && editors[activeFile]) {
+        files[activeFile] = editors[activeFile].getValue();
+    }
+
+    activeFile = name;
+    renderFileList();
+    renderTabs();
+
+    document.getElementById('editor-empty').style.display = 'none';
+    document.getElementById('editor-wrap').classList.add('show');
+    document.getElementById('s-file').textContent = name;
+
+    // create or reuse editor
+    if (!editors[name]) {
+        const wrap = document.getElementById('editor-wrap');
+        wrap.innerHTML = '';
+        const ta = document.createElement('textarea');
+        ta.value = files[name] || '';
+        wrap.appendChild(ta);
+
+        editors[name] = CodeMirror.fromTextArea(ta, {
+            mode: "text/x-java",
+            lineNumbers: true,
+            indentUnit: 4, tabSize: 4,
+            indentWithTabs: false,
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            styleActiveLine: true,
+            extraKeys: { "Ctrl-Enter": runActive, "Cmd-Enter": runActive }
+        });
+        editors[name].setSize('100%', '100%');
+    } else {
+        // reattach existing editor
+        const wrap = document.getElementById('editor-wrap');
+        wrap.innerHTML = '';
+        wrap.appendChild(editors[name].getWrapperElement());
+        editors[name].refresh();
+    }
+}
+
+function renderTabs() {
+    const tabsEl = document.getElementById('tabs');
+    tabsEl.innerHTML = '';
+    Object.keys(files).forEach(name => {
+        const tab = document.createElement('div');
+        tab.className = 'file-tab' + (name === activeFile ? ' active' : '');
+        tab.innerHTML = `
+            <div class="tab-dot"></div>
+            ${esc(name)}
+            <span class="tab-close" onclick="closeTab(event,'${esc(name)}')">✕</span>
+        `;
+        tab.onclick = (e) => { if (!e.target.classList.contains('tab-close')) openFile(name); };
+        tabsEl.appendChild(tab);
+    });
+}
+
+function closeTab(e, name) {
+    e.stopPropagation();
+    deleteFile(e, name);
+}
+
+function deleteFile(e, name) {
+    e.stopPropagation();
+    delete files[name];
+    delete editors[name];
+    if (activeFile === name) {
+        const remaining = Object.keys(files);
+        if (remaining.length > 0) openFile(remaining[0]);
+        else {
+            activeFile = null;
+            document.getElementById('editor-empty').style.display = 'flex';
+            document.getElementById('editor-wrap').classList.remove('show');
+            document.getElementById('s-file').textContent = 'No file open';
+            document.getElementById('tabs').innerHTML = '';
+        }
+    }
+    renderFileList();
+    renderTabs();
+}
+
+function showNewFile() {
+    const row = document.getElementById('new-file-row');
+    row.classList.add('show');
+    document.getElementById('new-file-input').value = '';
+    document.getElementById('new-file-input').focus();
+}
+
+function newFileKey(e) {
+    if (e.key === 'Enter') createFile();
+    if (e.key === 'Escape') document.getElementById('new-file-row').classList.remove('show');
+}
+
+function createFile() {
+    let name = document.getElementById('new-file-input').value.trim();
+    if (!name) return;
+    if (!name.endsWith('.opl')) name += '.opl';
+    document.getElementById('new-file-row').classList.remove('show');
+    createFileWithContent(name, `class Main {\n    void main() {\n        \n    }\n}`);
+}
+
+// ── Run ──
+async function runActive() {
+    if (!activeFile) return;
+
+    // save current content
+    if (editors[activeFile]) {
+        files[activeFile] = editors[activeFile].getValue();
+    }
+
+    const src = files[activeFile] || '';
+    if (!src.trim()) {
+        showOutput(`<span class="out-comment">// File is empty.</span>`);
+        return;
+    }
+
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    document.getElementById('progress').classList.add('running');
+    setStatus('Compiling…');
+    document.getElementById('out-time').textContent = '';
+
+    showOutput(`<span class="out-comment">// Compiling ${esc(activeFile)}… <span class="spin"></span></span>`);
+
+    const t0 = Date.now();
+    try {
+        const res = await fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source_code: src })
+        });
+        const data = await res.json();
+        poll(data.task_id, t0);
+    } catch(e) {
+        showOutput(`<div class="err-box"><div class="err-type">Network Error</div><div class="err-msg">${esc(e.message)}</div></div>`);
+        resetUI();
+    }
+}
+
+function poll(taskId, t0) {
+    const iv = setInterval(async () => {
+        try {
+            const res = await fetch(`/result/${taskId}`);
+            const data = await res.json();
+            if (data.status !== 'completed') return;
+            clearInterval(iv);
+
+            const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
+            const r = data.data;
+
+            if (r.status === 'success') {
+                lastOutput = r.output || '';
+                document.getElementById('out-time').textContent = elapsed + 's';
+                showOutput(
+                    `<div class="ok-box"><div class="ok-label">✓ Build Successful</div><div class="ok-time">${elapsed}s</div></div>` +
+                    `<span class="out-result">${esc(lastOutput)}</span>`
+                );
+                setStatus('OK');
+            } else {
+                const msg = r.error || 'Unknown error';
+                lastOutput = msg;
+                const type = r.status === 'compilation_error' ? 'Compilation Error'
+                           : r.status === 'timeout' ? 'Timeout (10s)' : 'Runtime Error';
+                showOutput(`<div class="err-box"><div class="err-type">✗ ${type}</div><div class="err-msg">${esc(msg)}</div></div>`);
+                setStatus('Error');
+            }
+            resetUI();
+        } catch(e) {
+            clearInterval(iv);
+            showOutput(`<div class="err-box"><div class="err-type">Poll Error</div><div class="err-msg">${esc(e.message)}</div></div>`);
+            resetUI();
+        }
+    }, 500);
+}
+
+function showOutput(html) {
+    document.getElementById('output-body').innerHTML = html;
+}
+
+function clearOutput() {
+    lastOutput = '';
+    document.getElementById('out-time').textContent = '';
+    showOutput(`<span class="out-comment">// Output cleared</span>`);
+}
+
+function copyOutput() {
+    navigator.clipboard.writeText(lastOutput || document.getElementById('output-body').innerText);
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function setStatus(text) {
+    document.getElementById('s-status').textContent = '● ' + text;
+    document.getElementById('status-pill').textContent = text.toLowerCase();
+}
+
+function resetUI() {
+    document.getElementById('run-btn').disabled = false;
+    document.getElementById('progress').classList.remove('running');
+}
+
+// ── Spec Modal ──
+function openSpec() {
+    document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeSpec() {
+    document.getElementById('modal-overlay').classList.remove('show');
+}
+
+function closeSpecOutside(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeSpec();
+}
+
+function showTab(id) {
+    document.querySelectorAll('.spec-section').forEach(s => s.classList.remove('show'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('show');
+    event.target.classList.add('active');
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Interactive WebSocket run ──
+let ws = null;
+
+function runInteractive() {
+    if (!activeFile || !editors[activeFile]) return;
+    files[activeFile] = editors[activeFile].getValue();
+    const src = files[activeFile];
+    if (!src.trim()) return;
+
+    // Đóng ws cũ nếu còn
+    if (ws) { ws.close(); ws = null; }
+
+    const btn = document.getElementById('run-interactive-btn');
+    btn.disabled = true;
+    btn.textContent = '⚡ Running...';
+    document.getElementById('run-btn').disabled = true;
+    document.getElementById('progress').classList.add('running');
+    setStatus('Interactive…');
+
+    showOutput(`<span class="out-comment">// ⚡ Interactive mode — program can receive stdin input\n\n</span>`);
+    showStdin(false);
+
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/run`);
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({ source_code: src }));
+    };
+
+    ws.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+
+        if (data.type === 'status') {
+            setStatus(data.msg);
+            appendOutput(`<span class="out-comment">// ${esc(data.msg)}\n</span>`);
+            if (data.msg === 'Running...') showStdin(true);
+
+        } else if (data.type === 'output') {
+            appendOutput(`<span class="out-result">${esc(data.msg)}</span>`);
+            // Hiện stdin box khi program đang chạy và có thể cần input
+            showStdin(true);
+
+        } else if (data.type === 'stderr') {
+            appendOutput(`<span class="out-error">${esc(data.msg)}</span>`);
+
+        } else if (data.type === 'error') {
+            showOutput(`<div class="err-box"><div class="err-type">✗ Error</div><div class="err-msg">${esc(data.msg)}</div></div>`);
+            resetInteractive();
+
+        } else if (data.type === 'done') {
+            showStdin(false);
+            const code = data.code;
+            appendOutput(`\n<span class="out-comment">// Process exited with code ${code}</span>`);
+            setStatus(code === 0 ? 'OK' : 'Error');
+            document.getElementById('out-time').textContent = '';
+            resetInteractive();
+        }
+    };
+
+    ws.onerror = () => {
+        appendOutput(`<div class="err-box"><div class="err-type">WebSocket Error</div><div class="err-msg">Connection failed. Make sure the server supports WebSocket.</div></div>`);
+        resetInteractive();
+    };
+
+    ws.onclose = () => resetInteractive();
+}
+
+function sendStdin(e) {
+    if (e.key !== 'Enter') return;
+    const inp = document.getElementById('stdin-input');
+    const val = inp.value;
+    inp.value = '';
+    // Hiện input vừa gõ trong output (màu yellow)
+    appendOutput(`<span style="color:var(--yellow);font-weight:600">${esc(val)}\n</span>`);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'input', msg: val }));
+    }
+}
+
+function showStdin(show) {
+    const row = document.getElementById('stdin-row');
+    row.classList.toggle('show', show);
+    if (show) setTimeout(() => document.getElementById('stdin-input').focus(), 50);
+}
+
+function appendOutput(html) {
+    document.getElementById('output-body').innerHTML += html;
+    document.getElementById('output-body').scrollTop = 99999;
+}
+
+function resetInteractive() {
+    document.getElementById('run-btn').disabled = false;
+    const btn = document.getElementById('run-interactive-btn');
+    btn.disabled = false;
+    btn.textContent = '⚡ Interactive';
+    document.getElementById('progress').classList.remove('running');
+    showStdin(false);
+    ws = null;
+}
+</script>
 </body>
 </html>

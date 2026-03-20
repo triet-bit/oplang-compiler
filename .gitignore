@@ -1,5 +1,53 @@
-build/
-venv/
-reports/
+# ── Python ──
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/*.pyc
+venv/
+.venv/
+env/
+
+# ── ANTLR generated (keep build/ source but ignore compiled) ──
+build/__pycache__/
+
+# ── Java / JVM ──
+*.class
+!src/runtime/io.class
+*.j
+!src/runtime/Main.j
+
+# ── Compiler temp output ──
+temp/
+temp_jobs/
+result.txt
+test.txt
+test.oplang
+*.txt
+!requirements.txt
+!deploy/rsync.txt
+
+# ── Test reports ──
+reports/
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Docker ──
+.dockerignore
+
+# ── Secrets ──
+*.pem
+*.key
+azure-ssh.txt

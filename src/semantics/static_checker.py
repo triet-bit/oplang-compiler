@@ -1047,7 +1047,7 @@ class StaticChecker(ASTVisitor):
      # ==================== PROGRAM & CLASS DECLARATIONS ====================
     def visit(self, node, o=None):
         return super().visit(node, o)
-    def z(self, node):
+    def check_program(self, node):
         return self.visit_program(node)
     def visit_program(self, node, o=None):
         phase1 = Phase1()

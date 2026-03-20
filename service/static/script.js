@@ -58,10 +58,10 @@ async function pollResult(taskId) {
                 // 4. Hiển thị kết quả
                 const result = data.data;
                 if (result.status === 'success') {
-                    outputConsole.innerHTML = `<span class="success-text">Build Successful!</span>\n\n${result.stdout}`;
+                    outputConsole.innerHTML = `<span class="success-text">✓ Build Successful</span>\n\n${result.output}`;
                 } else {
                     // Hiển thị lỗi (compile error, runtime error...)
-                    outputConsole.innerHTML = `<span class="error-text">Error (${result.status}):</span>\n${result.error || result.stderr}`;
+                    outputConsole.innerHTML = `<span class="error-text">✗ Error (${result.status}):</span>\n${result.error}`;
                 }
                 resetUI();
             }
@@ -70,7 +70,7 @@ async function pollResult(taskId) {
             outputConsole.innerHTML = `<span class="error-text">Network Error during polling</span>`;
             resetUI();
         }
-    }, 1000); // 1000ms = 1 giây
+    }, 500); // 500ms = 0.5 giây
 }
 
 function resetUI() {
