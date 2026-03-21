@@ -36,17 +36,12 @@ Result / Live Output        ← streamed back to browser
 
 ---
 
-## Compiler Pipeline
+## Inside the Compiler Pipeline
 
-```
-Source Code (.opl)
-    → Lexer (ANTLR4)
-    → Parser (ANTLR4)
-    → AST Generation
-    → Static Semantic Checker
-    → JVM Bytecode (Jasmin assembler)
-    → JVM Execution
-```
+OPLang is an **Ahead-of-Time (AOT) compiler** — source code is fully compiled to JVM bytecode before execution, similar to how Java/Kotlin work.
+
+The pipeline is divided into two parts: the **front-end** (implemented from scratch in this project) handles everything from reading source code to emitting Jasmin assembly, while the **back-end** is delegated to the JVM toolchain — Jasmin assembler converts `.j` files to `.class` bytecode, then the JVM executes them with JIT optimization at runtime.
+![System Architecture Diagram](./images/diagram.png)
 
 ---
 
