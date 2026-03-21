@@ -42,8 +42,9 @@ OPLang is an **Ahead-of-Time (AOT) compiler** — source code is fully compiled 
 
 The pipeline is divided into two parts: the **front-end** (implemented from scratch in this project) handles everything from reading source code to emitting Jasmin assembly, while the **back-end** is delegated to the JVM toolchain — Jasmin assembler converts `.j` files to `.class` bytecode, then the JVM executes them with JIT optimization at runtime.
 
+<div style="text-align: center;">
 ![OPLang Compiler](./images/oplang-pipline.drawio.png)
-
+</div>
 ---
 
 ## Web Service Architecture
