@@ -45,6 +45,7 @@ The pipeline is divided into two parts: the **front-end** (implemented from scra
 <p align="center">
   <img src="./images/oplang-pipline.drawio.png" alt="OPLang Compiler">
 </p>
+
 ---
 
 ## Web Service Architecture
