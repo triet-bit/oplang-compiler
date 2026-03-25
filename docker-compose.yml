@@ -1,39 +1,30 @@
 version: '3.8'
 
 services:
-  # 1. Redis: Nơi chứa hàng đợi task
   redis:
     image: redis:alpine
     container_name: oplang_redis
     ports:
       - "6379:6379"
     restart: always
-  # 2. Web API: Nhận request
   web:
     build: .
     container_name: oplang_web
-    # Chạy uvicorn. --host 0.0.0.0 để mở cổng ra ngoài container
     command: uvicorn service.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     depends_on:
       - redis
     environment:
-      # Sửa tên biến này khớp với file tasks.py (REDIS_URL) thay vì CELERY_BROKER_URL
       - REDIS_URL=redis://redis:6379/0
-      # Đã xóa PYTHONPATH và CLASSPATH vì Dockerfile đã lo rồi
     volumes:
       - .:/app
-      # --- KỸ THUẬT ANONYMOUS VOLUME (QUAN TRỌNG) ---
-      # Các dòng dưới bảo Docker: "Hãy dùng file trong Container, ĐỪNG lấy file ở máy thật đè lên"
-      # Giúp bảo vệ file build và class chuẩn Java trong Docker
       - /app/build
       - /app/src/runtime
       - /app/temp_jobs
       - /app/__pycache__
     restart: always
 
-  # 3. Worker: Thực thi code (Compiler)
   worker:
     build: .
     container_name: oplang_worker
@@ -42,10 +33,8 @@ services:
       - redis
     environment:
       - REDIS_URL=redis://redis:6379/0
-      # Đã xóa PYTHONPATH và CLASSPATH
     volumes:
       - .:/app
-      # Bảo vệ các thư mục quan trọng giống như service web
       - /app/build
       - /app/src/runtime
       - /app/temp_jobs

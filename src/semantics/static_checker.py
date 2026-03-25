@@ -830,7 +830,6 @@ class StaticChecker(ASTVisitor):
                 # [unit test] tao test phan undecl phai raise ra trc Type mismatch
                 node_to_report = postfix_expr.primary if postfix_expr else op
                 raise TypeMismatchInExpression(node_to_report)
-                #raise TypeMismatchInExpression(postfix_expr if postfix_expr else op)
             class_name = current_type.class_name
             global_env = o['global_env']
             if class_name not in global_env: 
@@ -1030,19 +1029,16 @@ class StaticChecker(ASTVisitor):
             return True
         
         if isinstance(stmt, BlockStatement):
-            # Trong block, chỉ cần tìm thấy 1 lệnh chắc chắn return là đủ
             for s in stmt.statements:
                 if self._check_always_return(s):
                     return True
             return False
             
         if isinstance(stmt, IfStatement):
-            # If phải có cả Else, và cả 2 nhánh đều phải return
             if stmt.else_stmt is None:
                 return False
             return self._check_always_return(stmt.then_stmt) and self._check_always_return(stmt.else_stmt)
             
-        # Các lệnh khác (Loop...) mặc định coi như không đảm bảo return (do điều kiện lặp có thể false)
         return False
      # ==================== PROGRAM & CLASS DECLARATIONS ====================
     def visit(self, node, o=None):
@@ -1091,7 +1087,6 @@ class StaticChecker(ASTVisitor):
                 )
                 global_symbol_table.add_symbol(symbol)
                 
-                # 2. CHECK TYPE MISMATCH & CONSTANT EXPRESSION (QUAN TRỌNG)
                 if info['init_val']:
                     init_type = self.visit(info['init_val'], global_context)
                     if not self._is_type_compatible(info['type'], init_type, global_context):

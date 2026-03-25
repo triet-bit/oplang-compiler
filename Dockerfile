@@ -1,6 +1,5 @@
 FROM python:3.12-slim
 
-# 'rm -rf /var/lib/apt/lists/*' giúp giảm dung lượng image
 RUN apt-get update && \
     apt-get install -y default-jre-headless default-jdk-headless && \
     apt-get clean && \
